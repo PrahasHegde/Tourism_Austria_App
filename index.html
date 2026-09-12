@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine Sounds | Austria Tourism</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        /* --- 1. YOUR ORIGINAL PERFECT LAYOUT CSS --- */
+        :root { --red: #c8102e; --deep-red: #8e1027; --ink: #1d2024; --cream: #fffaf5; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: var(--ink); background: var(--cream); font-family: "DM Sans", sans-serif; overflow-x: hidden; }
+        
+        .hero { min-height: 100vh; position: relative; overflow: hidden; background: linear-gradient(110deg, rgba(22,25,29,.78), rgba(22,25,29,.08)), url("https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=2200&q=85") center/cover; transition: opacity 0.7s ease; }
+        .hero::after { content: ""; position: absolute; inset: auto 0 0; height: 35%; background: linear-gradient(transparent, rgba(13,15,18,.72)); pointer-events: none; }
+        nav { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 30px 6vw; color: white; }
+        .brand { display: flex; gap: 12px; align-items: center; font-weight: 700; letter-spacing: .04em; }
+        .mark { width: 34px; height: 34px; display: grid; place-items: center; background: var(--red); font-size: 13px; }
+        .nav-note { font-size: 12px; text-transform: uppercase; letter-spacing: .18em; opacity: .8; }
+        .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 100px); width: min(760px, 88vw); padding: 0 6vw 10vh; color: white; }
+        .eyebrow { color: #ffccd3; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+        h1 { max-width: 680px; margin: 18px 0; font: 600 clamp(3.5rem, 8vw, 7.4rem)/.94 "Playfair Display", serif; letter-spacing: -.04em; color: white; }
+        .intro { max-width: 440px; margin: 0 0 34px; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.65; }
+        
+        .primary-button { border: 0; padding: 16px 23px; color: white; background: var(--red); font: 700 14px "DM Sans", sans-serif; cursor: pointer; transition: .2s ease; width: fit-content; text-decoration: none; display: inline-block; }
+        .primary-button:hover { background: #e52b48; transform: translateY(-2px); }
+        .footnote { position: absolute; bottom: 30px; right: 6vw; z-index: 1; color: rgba(255,255,255,.72); font-size: 12px; letter-spacing: .08em; }
+
+        /* --- 2. THE MODAL CSS --- */
+        .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; place-items: center; padding: 20px; background: rgba(18,20,23,.72); backdrop-filter: blur(8px); }
+        .modal-backdrop.open { display: grid; }
+        .modal { width: min(780px, 100%); max-height: 92vh; overflow-y: auto; background: var(--cream); box-shadow: 0 25px 80px rgba(0,0,0,.35); animation: rise .3s ease-out; border-radius: 12px;}
+        .modal-top { display: flex; justify-content: space-between; align-items: flex-start; padding: 28px 30px 18px; }
+        .modal h2 { margin: 0 0 6px; font: 600 32px "Playfair Display", serif; color: var(--ink); }
+        .modal p { margin: 0; color: #687078; font-size: 14px; }
+        .close { border: 0; background: transparent; color: #687078; font-size: 26px; line-height: 1; cursor: pointer; }
+        .camera-wrap { position: relative; margin: 0 30px; aspect-ratio: 16/9; overflow: hidden; background: #202327; border-radius: 8px;}
+        video { display: block; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .camera-status { position: absolute; bottom: 14px; left: 14px; padding: 9px 13px; color: white; background: rgba(18,20,23,.78); font-size: 13px; border-radius: 4px; }
+        .camera-status strong { color: #ffccd3; text-transform: capitalize; }
+        .controls { display: none; grid-template-columns: 1fr 1fr; gap: 20px; padding: 25px 30px 30px; }
+        .controls.visible { display: grid; }
+        .field label { display: block; margin-bottom: 9px; color: #687078; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+        select { width: 100%; border: 1px solid #dedbd6; padding: 13px; color: var(--ink); background: white; font: 500 14px "DM Sans", sans-serif; border-radius: 6px;}
+        .generate { grid-column: 1/-1; width: 100%; border-radius: 6px; text-align: center; font-size: 16px; padding: 18px;}
+        .generate:disabled { opacity: 0.7; cursor: not-allowed; }
+        .error { grid-column: 1/-1; color: var(--deep-red); font-size: 13px; }
+        @keyframes rise { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 3. THE NEW CINEMATIC PLAYER --- */
+        .view-player { position: fixed; inset: 0; z-index: 40; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; opacity: 0; background-color: #1d2024; }
+        .view-player.active { display: flex; }
+        .view-player.visible { opacity: 1; }
+        
+        .player-bg { position: absolute; inset: 0; z-index: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transition: background-image 0.5s ease; }
+        .player-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; }
+        
+        .glass-panel-player { position: relative; z-index: 10; background: rgba(18, 20, 23, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 24px; width: 90%; max-width: 480px; text-align: center; color: white; box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
+        
+        .player-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin: 0 0 8px 0; }
+        .player-title { font-family: "Playfair Display", serif; font-size: 36px; margin: 0 0 4px 0; font-weight: 600; color: white; }
+        .player-subtitle { font-size: 14px; color: rgba(255,255,255,0.8); margin: 0 0 32px 0; text-transform: capitalize; }
+        
+        .audio-controls { width: 100%; margin-bottom: 32px; }
+        .audio-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+        .btn-play { width: 48px; height: 48px; border-radius: 50%; background: white; color: black; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
+        .btn-play:hover { transform: scale(1.05); }
+        
+        .time-row { display: flex; justify-content: space-between; font-size: 12px; font-family: monospace; color: rgba(255,255,255,0.6); padding-left: 64px; padding-right: 4px; }
+        
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; flex-grow: 1; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 16px; width: 16px; border-radius: 50%; background: white; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-moz-range-thumb { appearance: none; height: 16px; width: 16px; border: none; border-radius: 50%; background: white; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+        input[type=range]::-moz-range-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; }
+        .action-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; color: white; transition: background 0.2s; border: none; cursor: pointer; }
+        .btn-download { background: rgba(255,255,255,0.15); }
+        .btn-download:hover { background: rgba(255,255,255,0.25); }
+        .btn-email { background: #2563eb; }
+        .btn-email:hover { background: #1d4ed8; }
+        
+        .btn-restart { margin-top: 24px; background: transparent; border: none; color: rgba(255,255,255,0.5); text-decoration: underline; font-size: 12px; cursor: pointer; font-family: inherit; }
+        .btn-restart:hover { color: white; }
+
+        @media (max-width: 600px) { nav { padding: 22px 7vw; } .nav-note { display: none; } .hero-content { padding: 0 7vw 14vh; } h1 { font-size: 4rem; } .footnote { right: 7vw; } .modal-top, .controls { padding-left: 20px; padding-right: 20px; } .camera-wrap { margin: 0 20px; } .controls { grid-template-columns: 1fr; } .action-buttons { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <main id="view-landing" class="hero">
+        <nav>
+            <div class="brand"><span class="mark">AT</span><span>AUSTRIA</span></div>
+            <span class="nav-note">The sound of the Alps</span>
+        </nav>
+        <section class="hero-content">
+            <span class="eyebrow">A journey in sound</span>
+            <h1>Find your way back to the mountains.</h1>
+            <p class="intro">Let Austria meet you where you are. We read your mood and compose a personal alpine soundscape for the moment.</p>
+            <button class="primary-button" id="open-sounds" type="button">Alpine Sounds &gt;</button>
+        </section>
+        <span class="footnote">Salzburg - Tyrol - Vorarlberg</span>
+    </main>
+
+    <div class="modal-backdrop" id="sounds-modal" role="dialog" aria-modal="true">
+        <section class="modal">
+            <div class="modal-top">
+                <div>
+                    <h2>Your alpine moment</h2>
+                    <p>Look into the camera while we tune into your mood.</p>
+                </div>
+                <button class="close" id="close-modal" type="button" aria-label="Close">&times;</button>
+            </div>
+            <div class="camera-wrap">
+                <video id="webcam" autoplay muted playsinline></video>
+                <div class="camera-status" id="camera-status">Waiting for camera access...</div>
+            </div>
+            <canvas id="canvas" hidden></canvas>
+            <div class="controls" id="controls">
+                <div class="field">
+                    <label for="season">Season</label>
+                    <select id="season">
+                        <option value="Summer">Summer</option>
+                        <option value="Winter">Winter</option>
+                        <option value="Spring">Spring</option>
+                        <option value="Autumn">Autumn</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="time">Time of day</label>
+                    <select id="time">
+                        <option value="Day">Day</option>
+                        <option value="Evening">Evening</option>
+                        <option value="Night">Night</option>
+                    </select>
+                </div>
+                <button class="primary-button generate" id="btn-generate" type="button">Generate my soundscape &gt;</button>
+                <p class="error" id="error-msg" hidden></p>
+            </div>
+        </section>
+    </div>
+
+    <!-- VIEW 2: THE IMMERSIVE PLAYER -->
+    <section id="view-player" class="view-player">
+        <div id="player-bg" class="player-bg"></div>
+        <div class="player-overlay"></div>
+        <div class="glass-panel-player">
+            <p class="player-eyebrow">Austria Tourism</p>
+            <h2 class="player-title">Your Soundscape</h2>
+            <!-- Safest possible separator text: standard pipe | -->
+            <p class="player-subtitle" id="player-subtitle"></p>
+            
+            <audio id="audio-player"></audio>
+            
+            <div class="audio-controls">
+                <div class="audio-row">
+                    <button id="btn-play-pause" class="btn-play">
+                        <i data-feather="play" id="icon-play"></i>
+                        <i data-feather="pause" id="icon-pause" style="display:none;"></i>
+                    </button>
+                    <input type="range" id="seek-bar" value="0">
+                </div>
+                <div class="time-row">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a id="action-download" href="#" download="austria_soundscape.wav" class="action-btn btn-download">
+                    <i data-feather="download" style="width:18px;height:18px;"></i> Download
+                </a>
+                <a id="action-email" href="#" class="action-btn btn-email">
+                    <i data-feather="mail" style="width:18px;height:18px;"></i> Email Track
+                </a>
+            </div>
+            
+            <button id="btn-restart" class="btn-restart">Start over</button>
+        </div>
+    </section>
+
+    <script>
+        feather.replace();
+
+        const viewLanding = document.getElementById('view-landing');
+        const viewPlayer = document.getElementById('view-player');
+        const modal = document.getElementById('sounds-modal');
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const statusEl = document.getElementById('camera-status');
+        const controlsEl = document.getElementById('controls');
+        
+        const audio = document.getElementById('audio-player');
+        const playPauseBtn = document.getElementById('btn-play-pause');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const seekBar = document.getElementById('seek-bar');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+
+        let currentMood = "neutral";
+        let stream;
+        let detectionTimer;
+
+        // FIXED PATHS: Using web-standard forward slashes
+        const backgroundImages = {
+            "Summer": {
+                "Day": "images/summer_day.jpeg",
+                "Evening": "images/summer_evening.jpeg",
+                "Night": "images/summer_night.jpeg"
+            },
+            "Winter": {
+                "Day": "images/winter_day.jpeg",
+                "Evening": "images/winter_evening.jpeg",
+                "Night": "images/winter_night.jpeg"
+            },
+            "Spring": {
+                "Day": "images/spring_day.jpeg",
+                "Evening": "images/spring_evening.jpeg",
+                "Night": "images/spring_night.jpeg"
+            },
+            "Autumn": {
+                "Day": "images/autumn_day.jpeg",
+                "Evening": "images/autumn_evening.jpeg",
+                "Night": "images/autumn_night.jpeg"
+            }
+        };
+
+        // Modal open & Webcam
+        document.getElementById('open-sounds').addEventListener('click', async () => {
+            modal.classList.add("open");
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                statusEl.innerHTML = "Reading your mood... <strong>Analyzing</strong>";
+                detectMood();
+                detectionTimer = setInterval(detectMood, 3000);
+            } catch (err) {
+                statusEl.innerHTML = "Camera unavailable. <strong>Neutral</strong> mode active.";
+                controlsEl.classList.add("visible");
+            }
+        });
+
+        document.getElementById('close-modal').addEventListener('click', closeSounds);
+        function closeSounds() {
+            modal.classList.remove("open");
+            clearInterval(detectionTimer);
+            if (stream) stream.getTracks().forEach(t => t.stop());
+        }
+
+        async function detectMood() {
+            if (!video.videoWidth) return;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            canvas.toBlob(async (blob) => {
+                if(!blob) return;
+                const fd = new FormData(); fd.append("image", blob, "mood.jpg");
+                try {
+                    const res = await fetch("/api/detect-mood", { method: "POST", body: fd });
+                    const data = await res.json();
+                    currentMood = data.mood || "neutral";
+                    statusEl.innerHTML = `Mood detected: <strong>${currentMood}</strong>`;
+                    controlsEl.classList.add("visible");
+                } catch(e) {}
+            }, "image/jpeg", 0.8);
+        }
+
+        // Generate track and switch view
+        document.getElementById('btn-generate').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true; 
+            btn.innerHTML = "Composing...";
+            
+            const season = document.getElementById("season").value.trim();
+            const time = document.getElementById("time").value.trim();
+            
+            const fd = new FormData();
+            fd.append("mood", currentMood);
+            fd.append("season", season);
+            fd.append("time_of_day", time);
+
+            try {
+                const res = await fetch("/api/generate-soundscape", { method: "POST", body: fd });
+                const data = await res.json();
+                
+                if (data.track_url) {
+                    switchToPlayer(data.track_url, season, time, currentMood);
+                }
+            } catch (err) {
+                const errorEl = document.getElementById('error-msg');
+                errorEl.innerText = "Check your python backend and audio folder!";
+                errorEl.hidden = false;
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = "Generate my soundscape &gt;";
+            }
+        });
+
+        function switchToPlayer(trackUrl, season, time, mood) {
+            closeSounds();
+            
+            // SET TEXT
+            document.getElementById('player-subtitle').innerHTML = `${season} | ${time} | <span style="text-transform: capitalize;">${mood}</span>`;
+            
+            // SAFE IMAGE LOADER
+            const bgUrl = (backgroundImages[season] && backgroundImages[season][time]) ? backgroundImages[season][time] : "";
+            const playerBgDiv = document.getElementById('player-bg');
+            
+            if (bgUrl) {
+                const img = new Image();
+                img.onload = () => {
+                    playerBgDiv.style.backgroundImage = `url("${bgUrl}")`;
+                };
+                img.onerror = () => {
+                    console.error(`IMAGE MISSING: Could not find ${bgUrl} inside your folder.`);
+                    playerBgDiv.style.backgroundImage = 'none';
+                    playerBgDiv.style.backgroundColor = '#1d2024';
+                };
+                img.src = bgUrl;
+            }
+            
+            // Configure action links
+            document.getElementById('action-download').href = trackUrl;
+            const siteUrl = window.location.href;
+            const mailBody = `Listen to my personalized Austria soundscape generated based on my mood!%0D%0A%0D%0AMood: ${mood}%0D%0ASeason: ${season}%0D%0ATime: ${time}%0D%0A%0D%0AVisit: ${siteUrl}`;
+            document.getElementById('action-email').href = `mailto:?subject=My Alpine Soundscape&body=${mailBody}`;
+
+            // Preload Audio
+            audio.src = `${trackUrl}?t=${Date.now()}`;
+            audio.load();
+            
+            // Fade Transition
+            viewLanding.style.opacity = "0";
+            setTimeout(() => {
+                viewLanding.style.display = "none";
+                viewPlayer.classList.add("active");
+                
+                setTimeout(() => {
+                    viewPlayer.classList.add("visible");
+                    togglePlay(); 
+                }, 50);
+            }, 500);
+        }
+
+        // Audio Player Controls
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play().catch(e => console.log("Autoplay blocked. User click required."));
+                iconPlay.style.display = 'none';
+                iconPause.style.display = 'block';
+            } else {
+                audio.pause();
+                iconPlay.style.display = 'block';
+                iconPause.style.display = 'none';
+            }
+        }
+
+        playPauseBtn.addEventListener('click', togglePlay);
+
+        audio.addEventListener('timeupdate', () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            seekBar.value = progress || 0;
+            timeCurrent.innerText = formatTime(audio.currentTime);
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            timeTotal.innerText = formatTime(audio.duration);
+        });
+
+        seekBar.addEventListener('input', () => {
+            const time = (seekBar.value / 100) * audio.duration;
+            audio.currentTime = time;
+        });
+
+        audio.addEventListener('ended', () => {
+            iconPlay.style.display = 'block';
+            iconPause.style.display = 'none';
+            seekBar.value = 0;
+        });
+
+        // Start Over
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            audio.pause();
+            viewPlayer.classList.remove("visible");
+            
+            setTimeout(() => {
+                viewPlayer.classList.remove("active");
+                viewLanding.style.display = "block";
+                
+                setTimeout(() => {
+                    viewLanding.style.opacity = "1";
+                }, 50);
+            }, 800);
+        });
+    </script>
+</body>
+</html>
