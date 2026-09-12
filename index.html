@@ -282,40 +282,22 @@
         }
 
         .generate.countdown-active {
-            min-height: 64px;
-            padding: 10px 18px;
-            color: var(--red);
-            background: linear-gradient(to bottom, var(--red) 0 33.33%, white 33.33% 66.66%, var(--red) 66.66% 100%);
-            box-shadow: 0 8px 18px rgba(200, 16, 46, .22);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .countdown-active .generation-label {
-            color: var(--red);
-            font-size: 14px;
-            font-weight: 700;
+            color: white;
+            background: var(--red);
         }
 
         .generation-bar {
             display: block;
             width: 100%;
-            height: 12px;
+            height: 4px;
             margin-top: 9px;
             overflow: hidden;
-            background: linear-gradient(to bottom, var(--red) 0 33.33%, white 33.33% 66.66%, var(--red) 66.66% 100%);
+            background: white;
             border-radius: 4px;
         }
 
         .countdown-active .generation-bar {
-            width: min(88%, 420px);
-            height: 5px;
-            margin-top: 0;
-            background: rgba(255, 255, 255, .72);
-            border-radius: 999px;
+            width: 100%;
         }
 
         .generation-progress {
@@ -621,7 +603,7 @@
         </nav>
         <section class="hero-content">
             <span class="eyebrow">A journey in sound</span>
-            <h1>The Sound of You</h1>
+            <h1> Your Sonic Journey to Austria </h1>
             <p class="intro">Let Austria meet you where you are. We read your mood and compose a personal alpine
                 soundscape for the moment.</p>
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -632,7 +614,6 @@
                 </a>
             </div>
         </section>
-        <span class="footnote">Salzburg - Tyrol - Vorarlberg</span>
     </main>
 
     <div class="modal-backdrop" id="sounds-modal" role="dialog" aria-modal="true">
@@ -735,6 +716,7 @@
         let currentMood = "neutral";
         let stream;
         let detectionTimer;
+        let moodDetected = false;
 
         // FIXED PATHS: Using web-standard forward slashes
         const backgroundImages = {
@@ -763,6 +745,8 @@
         // Modal open & Webcam
         document.getElementById('open-sounds').addEventListener('click', async () => {
             modal.classList.add("open");
+            moodDetected = false;
+            controlsEl.classList.remove("visible");
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
@@ -770,6 +754,8 @@
                 detectMood();
                 detectionTimer = setInterval(detectMood, 3000);
             } catch (err) {
+                moodDetected = true;
+                clearInterval(detectionTimer);
                 statusEl.innerHTML = "Camera unavailable. <strong>Neutral</strong> mode active.";
                 controlsEl.classList.add("visible");
             }
@@ -783,7 +769,7 @@
         }
 
         async function detectMood() {
-            if (!video.videoWidth) return;
+            if (moodDetected || !video.videoWidth) return;
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext("2d").drawImage(video, 0, 0);
             canvas.toBlob(async (blob) => {
@@ -792,6 +778,9 @@
                 try {
                     const res = await fetch("/api/detect-mood", { method: "POST", body: fd });
                     const data = await res.json();
+                    if (moodDetected) return;
+                    moodDetected = true;
+                    clearInterval(detectionTimer);
                     currentMood = data.mood || "neutral";
                     statusEl.innerHTML = `Mood detected: <strong>${currentMood}</strong>`;
                     controlsEl.classList.add("visible");
@@ -834,7 +823,7 @@
             }
             // Scenario 3
             else if (moodIsValid && season === "Spring" && time === "Evening") {
-                hardcodedTrackUrl = "static/spring_sad.mp3";
+                hardcodedTrackUrl = "static/spring_evening.mp3";
             }
 
             // If it's a hardcoded scenario, load it immediately and exit
