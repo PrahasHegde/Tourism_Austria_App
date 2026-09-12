@@ -818,22 +818,19 @@
             btn.innerHTML = "Composing...";
 
             // --- FIXED HARDCODED LOGIC ---
-            const moodCheck = currentMood.toLowerCase();
-            const moodIsValid = ["happy", "neutral", "sad"].includes(moodCheck);
-
             let hardcodedTrackUrl = null;
 
             // Scenario 1
-            if (moodIsValid && season === "Summer" && time === "Day") {
+            if (season === "Summer" && time === "Day") {
                 // Assuming you moved the file to the static folder
                 hardcodedTrackUrl = "static/summer_happy.mp3";
             }
             // Scenario 2
-            else if (["sad", "neutral"].includes(moodCheck) && season === "Winter" && time === "Night") {
+            else if (season === "Winter" && time === "Night") {
                 hardcodedTrackUrl = "static/winter_sad.mp3";
             }
             // Scenario 3
-            else if (moodIsValid && season === "Spring" && time === "Evening") {
+            else if (season === "Spring" && time === "Evening") {
                 hardcodedTrackUrl = "static/spring_evening.mp3";
             }
 
@@ -857,13 +854,12 @@
                 const res = await fetch("/api/generate-soundscape", { method: "POST", body: fd });
                 const data = await res.json();
 
-                if (data.track_url) {
-                    switchToPlayer(data.track_url, season, time, currentMood);
-                }
+                if (!res.ok || !data.track_url) throw new Error("No soundscape was returned");
+                switchToPlayer(data.track_url, season, time, currentMood);
             } catch (err) {
                 console.error("Backend Error:", err);
                 const errorEl = document.getElementById('error-msg');
-                errorEl.innerText = "Check your python backend and audio folder!";
+                errorEl.innerText = "We could not create this soundscape. Check the audio files and try again.";
                 errorEl.hidden = false;
             } finally {
                 btn.disabled = false;
@@ -963,11 +959,14 @@
             if (audio.paused) {
                 if (pendingTrackUrl) {
                     audio.src = pendingTrackUrl;
-                    audio.load();
                     pendingTrackUrl = "";
                 }
                 userRequestedPlayback = true;
-                audio.play().catch(e => console.log("Autoplay blocked. User click required."));
+                audio.play().catch(() => {
+                    userRequestedPlayback = false;
+                    iconPlay.style.display = 'block';
+                    iconPause.style.display = 'none';
+                });
                 iconPlay.style.display = 'none';
                 iconPause.style.display = 'block';
             } else {

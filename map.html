@@ -57,7 +57,7 @@
     <div class="ui-overlay">
         <div class="header-panel">
             <h1>The Acoustic Map</h1>
-            <p>19 raw nature recordings from the Austrian Alps.</p>
+            <p>23 raw nature recordings from the Austrian Alps.</p>
         </div>
         <a href="/" class="btn-back">
             <i data-feather="arrow-left" style="width: 16px; height: 16px;"></i> Sound Generator
@@ -95,35 +95,31 @@
         const playingTitle = document.getElementById('playing-title');
         let activeMarker = null;
 
-        // TEMPORARY LIVE AUDIO URLs FOR TESTING
-        const tmpWater = "https://actions.google.com/sounds/v1/water/stream_flowing.ogg";
-        const tmpWind = "https://actions.google.com/sounds/v1/weather/wind_blowing_through_trees.ogg";
-        const tmpBird = "https://actions.google.com/sounds/v1/animals/crows_cawing.ogg";
-        const tmpHuman = "https://actions.google.com/sounds/v1/foley/footsteps_on_gravel.ogg";
-        const tmpCulture = "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg";
-
-        // 4. The 19 Austrian Sound Locations Matrix
-        // I have swapped the 'file' property to use the live URLs above.
+        // 4. The local Austrian sound collection
         const soundsData = [
-            { id: 1, title: "Kaprun River Flow", lat: 47.273, lng: 12.759, file: tmpWater },
-            { id: 2, title: "Cow Bells in Summer", lat: 47.450, lng: 12.800, file: tmpCulture },
-            { id: 3, title: "Hiking Boots on Gravel", lat: 47.074, lng: 12.694, file: tmpHuman }, 
-            { id: 4, title: "Alpine Choughs Calling", lat: 47.150, lng: 13.100, file: tmpBird }, 
-            { id: 5, title: "Dachstein Howling Wind", lat: 47.475, lng: 13.620, file: tmpWind },
-            { id: 6, title: "Melting Glacier Drips", lat: 47.100, lng: 12.750, file: tmpWater },
-            { id: 7, title: "Distant Village Church Bells", lat: 47.323, lng: 12.796, file: tmpCulture }, 
-            { id: 8, title: "Krimml Waterfall Roar", lat: 47.211, lng: 12.169, file: tmpWater },
-            { id: 9, title: "Snow Crunch under Foot", lat: 47.280, lng: 12.700, file: tmpHuman },
-            { id: 10, title: "Marmots Whistling", lat: 47.110, lng: 12.820, file: tmpBird },
-            { id: 11, title: "Pine Forest Breeze", lat: 47.400, lng: 13.000, file: tmpWind },
-            { id: 12, title: "Summer Rain on Leaves", lat: 47.500, lng: 13.200, file: tmpWater },
-            { id: 13, title: "Woodpecker in the Woods", lat: 47.350, lng: 13.300, file: tmpBird },
-            { id: 14, title: "Mountain Bike on Trail", lat: 47.380, lng: 12.650, file: tmpHuman },
-            { id: 15, title: "Campfire Crackling", lat: 47.250, lng: 13.400, file: tmpWind },
-            { id: 16, title: "Morning Meadow Birds", lat: 47.420, lng: 12.900, file: tmpBird },
-            { id: 17, title: "Distant Thunder Echo", lat: 47.180, lng: 13.500, file: tmpWind },
-            { id: 18, title: "Mountain Hut Ambience", lat: 47.300, lng: 12.950, file: tmpCulture },
-            { id: 19, title: "Ice Cracking on Lake", lat: 47.320, lng: 12.800, file: tmpWater }
+            { id: 1, title: "Yodelling in the Alps", lat: 47.273, lng: 12.759, file: "collections/Yodelling/Yodelling.mp3" },
+            { id: 2, title: "Dance Schuachplattler", lat: 47.450, lng: 12.800, file: "collections/Instruments/Dance Schuachplattler.mp3" },
+            { id: 3, title: "Accordion in the Alps", lat: 47.380, lng: 12.650, file: "collections/Instruments/Accordion.mp3" },
+            { id: 4, title: "Happy Alpine Beat", lat: 47.410, lng: 12.900, file: "collections/Beats/Happy.mp3" },
+            { id: 5, title: "Hopeful Mountain Evening", lat: 47.320, lng: 12.796, file: "collections/Beats/Hopeful.mp3" },
+            { id: 6, title: "Relaxed Summer Morning", lat: 47.420, lng: 13.000, file: "collections/Beats/Relaxed.mp3" },
+            { id: 7, title: "Birds in the Meadow", lat: 47.150, lng: 13.100, file: "collections/Fauna/Birds.mp3" },
+            { id: 8, title: "Cow Bells in the Valley", lat: 47.450, lng: 12.950, file: "collections/Fauna/Cow.mp3" },
+            { id: 9, title: "Horses at a Mountain Farm", lat: 47.210, lng: 12.850, file: "collections/Fauna/Horses Galopp.mp3" },
+            { id: 10, title: "Horses Whickering", lat: 47.180, lng: 13.250, file: "collections/Fauna/Horses whicker.mp3" },
+            { id: 11, title: "Water by the Alps", lat: 47.100, lng: 12.750, file: "collections/Ambient/At the water.mp3" },
+            { id: 12, title: "Bottles at an Alpine Table", lat: 47.300, lng: 12.950, file: "collections/Ambient/Bottles.mp3" },
+            { id: 13, title: "Cheerful Alpine Crowd", lat: 47.350, lng: 13.300, file: "collections/Ambient/Cheerful crowd.mp3" },
+            { id: 14, title: "Village Churchbells", lat: 47.323, lng: 12.796, file: "collections/Ambient/Churchbells.mp3" },
+            { id: 15, title: "Evening Village Event", lat: 47.475, lng: 13.620, file: "collections/Ambient/Crowd Evening Event.mp3" },
+            { id: 16, title: "Cutlery at a Mountain Restaurant", lat: 47.250, lng: 13.400, file: "collections/Ambient/Cutlery.mp3" },
+            { id: 17, title: "Evening Mountain Wind", lat: 47.180, lng: 13.500, file: "collections/Ambient/Evening wind.mp3" },
+            { id: 18, title: "Hiking in the Alps", lat: 47.074, lng: 12.694, file: "collections/Ambient/Hiking.mp3" },
+            { id: 19, title: "Mountain Air", lat: 47.400, lng: 13.000, file: "collections/Ambient/Mountain Air.mp3" },
+            { id: 20, title: "Vienna Tram", lat: 48.208, lng: 16.373, file: "collections/Ambient/Vienna Tram.mp3" },
+            { id: 21, title: "Wineglass in Austria", lat: 48.250, lng: 15.600, file: "collections/Ambient/Wineglass.mp3" },
+            { id: 22, title: "Winter Mountain Wind", lat: 47.280, lng: 12.700, file: "collections/Ambient/Winter wind.mp3" },
+            { id: 23, title: "Main Alpine Song", lat: 47.200, lng: 13.050, file: "collections/Tracks/main song.mp3" }
         ];
 
         // 5. Custom Marker Icon HTML
@@ -156,7 +152,7 @@
                 marker.getElement().classList.add('playing');
 
                 // Error Handling for Audio
-                currentAudio = new Audio(sound.file);
+                currentAudio = new Audio(encodeURI(sound.file));
                 currentAudio.loop = true; 
                 
                 currentAudio.play().then(() => {

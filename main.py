@@ -16,6 +16,9 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 # Serve generated audio files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Serve the local sound collection used by the acoustic map
+app.mount("/collections", StaticFiles(directory="collections"), name="collections")
+
 @app.post("/api/detect-mood")
 async def detect_mood(image: UploadFile = File(...)):
     """Receives a webcam snapshot from the frontend and returns the emotion."""
