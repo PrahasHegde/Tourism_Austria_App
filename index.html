@@ -537,6 +537,14 @@
             background: #1d4ed8;
         }
 
+        .email-help {
+            display: none;
+            margin: 12px 0 0;
+            color: rgba(255, 255, 255, .7);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
         .btn-restart {
             margin-top: 24px;
             background: transparent;
@@ -686,9 +694,10 @@
                     <i data-feather="download" style="width:18px;height:18px;"></i> Download
                 </a>
                 <a id="action-email" href="#" class="action-btn btn-email">
-                    <i data-feather="mail" style="width:18px;height:18px;"></i> Email Track
+                    <i data-feather="mail" style="width:18px;height:18px;"></i> Email
                 </a>
             </div>
+            <p class="email-help" id="email-help">Your browser cannot attach files to Gmail automatically. Use Download, then attach the MP3 in Gmail.</p>
 
             <button id="btn-restart" class="btn-restart">Start over</button>
         </div>
@@ -717,6 +726,8 @@
         let stream;
         let detectionTimer;
         let moodDetected = false;
+        let userRequestedPlayback = false;
+        let pendingTrackUrl = "";
 
         // FIXED PATHS: Using web-standard forward slashes
         const backgroundImages = {
@@ -863,6 +874,8 @@
         function switchToPlayer(trackUrl, season, time, mood) {
             closeSounds();
 
+            const absoluteTrackUrl = new URL(trackUrl, window.location.href).href;
+
             // SET TEXT
             document.getElementById('player-subtitle').innerHTML = `${season} | ${time} | <span style="text-transform: capitalize;">${mood}</span>`;
 
@@ -884,20 +897,47 @@
             }
 
             // Configure action links
-            document.getElementById('action-download').href = trackUrl;
+            const downloadLink = document.getElementById('action-download');
+            downloadLink.href = absoluteTrackUrl;
+            downloadLink.download = `${season.toLowerCase()}_${time.toLowerCase()}_soundscape.mp3`;
             const siteUrl = window.location.href;
-            const mailBody = `Listen to my personalized Austria soundscape generated based on my mood!%0D%0A%0D%0AMood: ${mood}%0D%0ASeason: ${season}%0D%0ATime: ${time}%0D%0A%0D%0AVisit: ${siteUrl}`;
-            document.getElementById('action-email').href = `mailto:?subject=My Alpine Soundscape&body=${mailBody}`;
+            const mailSubject = "My Alpine Soundscape";
+            const mailBody = `Listen to my personalized Austria soundscape generated based on my mood!\n\nMood: ${mood}\nSeason: ${season}\nTime: ${time}\n\nListen here: ${absoluteTrackUrl}\nVisit: ${siteUrl}`;
+            const emailLink = document.getElementById('action-email');
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+            emailLink.href = gmailUrl;
+            emailLink.onclick = async (event) => {
+                event.preventDefault();
+                document.getElementById('email-help').style.display = 'none';
+                try {
+                    const trackResponse = await fetch(absoluteTrackUrl);
+                    if (!trackResponse.ok) throw new Error('Track unavailable');
+                    const trackBlob = await trackResponse.blob();
+                    const trackFile = new File([trackBlob], downloadLink.download, { type: trackBlob.type || 'audio/mpeg' });
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [trackFile] })) {
+                        await navigator.share({ title: mailSubject, text: mailBody, files: [trackFile] });
+                        return;
+                    }
+                } catch (shareError) {
+                    if (shareError.name === 'AbortError') return;
+                }
+                const gmailWindow = window.open(gmailUrl, '_blank', 'noopener');
+                if (!gmailWindow) document.getElementById('email-help').style.display = 'block';
+            };
 
             // Preload Audio
             // Only add cache buster if it's NOT a hardcoded track to avoid redownloading large MP3s unnecessarily
-            if (trackUrl.includes("generated")) {
-                audio.src = `${trackUrl}?t=${Date.now()}`;
-            } else {
-                audio.src = trackUrl;
-            }
-
+            userRequestedPlayback = false;
+            pendingTrackUrl = absoluteTrackUrl.includes("generated")
+                ? `${absoluteTrackUrl}?t=${Date.now()}`
+                : absoluteTrackUrl;
+            audio.autoplay = false;
+            audio.removeAttribute('autoplay');
+            audio.pause();
+            audio.removeAttribute('src');
             audio.load();
+            iconPlay.style.display = 'block';
+            iconPause.style.display = 'none';
 
             // Fade Transition
             viewLanding.style.opacity = "0";
@@ -907,7 +947,6 @@
 
                 setTimeout(() => {
                     viewPlayer.classList.add("visible");
-                    togglePlay();
                 }, 50);
             }, 500);
         }
@@ -922,10 +961,17 @@
 
         function togglePlay() {
             if (audio.paused) {
+                if (pendingTrackUrl) {
+                    audio.src = pendingTrackUrl;
+                    audio.load();
+                    pendingTrackUrl = "";
+                }
+                userRequestedPlayback = true;
                 audio.play().catch(e => console.log("Autoplay blocked. User click required."));
                 iconPlay.style.display = 'none';
                 iconPause.style.display = 'block';
             } else {
+                userRequestedPlayback = false;
                 audio.pause();
                 iconPlay.style.display = 'block';
                 iconPause.style.display = 'none';
@@ -933,6 +979,14 @@
         }
 
         playPauseBtn.addEventListener('click', togglePlay);
+
+        audio.addEventListener('play', () => {
+            if (!userRequestedPlayback) {
+                audio.pause();
+                iconPlay.style.display = 'block';
+                iconPause.style.display = 'none';
+            }
+        });
 
         audio.addEventListener('timeupdate', () => {
             const progress = (audio.currentTime / audio.duration) * 100;
