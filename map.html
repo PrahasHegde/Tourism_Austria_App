@@ -123,17 +123,28 @@
         ];
 
         // 5. Custom Marker Icon HTML
-        const createMarkerIcon = () => L.divIcon({
-            className: 'custom-marker',
-            html: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>`,
+        const createMarkerIcon = (file) => {
+            const category = file.split('/')[1] || 'Ambient';
+            const icons = {
+                Ambient: `<path d="m3 18 6-8 4 5 2-3 6 6"></path><path d="M3 20h18"></path><path d="M17.5 8.5c1 .6 1 1.8 0 2.4"></path><path d="M19.5 6.5c2.7 1.6 2.7 4.8 0 6.4"></path>`,
+                Beats: `<path d="M9 18V5l10-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="16" cy="16" r="3"></circle>`,
+                Fauna: `<path d="M5 14c1.5-4 4.1-6 7-6s5.5 2 7 6"></path><path d="M8 10 6 7M16 10l2-3"></path><circle cx="9" cy="13" r=".7" fill="currentColor"></circle><circle cx="15" cy="13" r=".7" fill="currentColor"></circle><path d="M10 16c1.3 1 2.7 1 4 0"></path>`,
+                Instruments: `<path d="M8 4v11"></path><path d="M8 4h7v4H8"></path><path d="M5 15h6a3 3 0 1 1-6 0Z"></path><path d="M15 8v8"></path><path d="M15 8h4"></path>`,
+                Tracks: `<path d="m3 17 6-7 4 4 3-5 5 8"></path><path d="M3 20h18"></path><circle cx="18" cy="6" r="2"></circle>`,
+                Yodelling: `<path d="M4 18c2-5 4-8 8-8s6 3 8 8"></path><path d="M7 18h10"></path><path d="M9 6h6"></path><path d="M12 6v4"></path>`
+            };
+            return L.divIcon({
+            className: `custom-marker marker-${category.toLowerCase()}`,
+            html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[category] || icons.Ambient}</svg>`,
             iconSize: [36, 36],
             iconAnchor: [18, 18]
-        });
+            });
+        };
 
         // 6. Plot Markers on Map
         const markers = [];
         soundsData.forEach(sound => {
-            const marker = L.marker([sound.lat, sound.lng], { icon: createMarkerIcon() }).addTo(map);
+            const marker = L.marker([sound.lat, sound.lng], { icon: createMarkerIcon(sound.file) }).addTo(map);
             markers.push(marker);
             
             marker.bindPopup(`<strong>${sound.title}</strong><span style="color:#aaa; font-size:12px; text-transform:uppercase;">Click to listen</span>`);
