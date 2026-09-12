@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Map | Austria Tourism</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS for the Interactive Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        :root { --red: #c8102e; --ink: #1d2024; --cream: #fffaf5; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: "DM Sans", sans-serif; background-color: var(--ink); overflow: hidden; }
+        
+        /* The Map Container */
+        #map { width: 100%; height: 100vh; z-index: 1; }
+
+        /* Custom UI Overlay */
+        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; z-index: 10; display: flex; justify-content: space-between; padding: 30px 4vw; }
+        
+        .header-panel { pointer-events: auto; background: rgba(29, 32, 36, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 20px 30px; border-radius: 16px; color: white; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .header-panel h1 { font-family: "Playfair Display", serif; margin: 0 0 5px 0; font-size: 24px; }
+        .header-panel p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); }
+
+        .btn-back { pointer-events: auto; background: var(--cream); color: var(--ink); padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; height: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn-back:hover { transform: translateY(-2px); }
+
+        /* Now Playing Widget */
+        .now-playing { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); pointer-events: auto; background: rgba(200, 16, 46, 0.95); backdrop-filter: blur(12px); color: white; padding: 15px 30px; border-radius: 50px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 40px rgba(200, 16, 46, 0.4); opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translate(-50%, 20px); }
+        .now-playing.active { opacity: 1; transform: translate(-50%, 0); }
+        .sound-wave { display: flex; gap: 3px; height: 20px; align-items: flex-end; }
+        .bar { width: 4px; background: white; border-radius: 2px; animation: wave 1s ease-in-out infinite; }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        
+        @keyframes wave { 0%, 100% { height: 4px; } 50% { height: 20px; } }
+
+        /* Custom Leaflet Marker Styling */
+        .custom-marker { background: var(--ink); color: white; border: 2px solid white; border-radius: 50%; width: 36px !important; height: 36px !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: transform 0.2s, background 0.2s; cursor: pointer; }
+        .custom-marker:hover, .custom-marker.playing { transform: scale(1.15); background: var(--red); border-color: var(--cream); }
+        .leaflet-popup-content-wrapper { background: rgba(29, 32, 36, 0.9); color: white; border-radius: 12px; backdrop-filter: blur(8px); }
+        .leaflet-popup-tip { background: rgba(29, 32, 36, 0.9); }
+        .leaflet-popup-content { margin: 15px; font-family: "DM Sans", sans-serif; text-align: center; }
+        .leaflet-popup-content strong { font-size: 16px; font-family: "Playfair Display", serif; display: block; margin-bottom: 4px;}
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="ui-overlay">
+        <div class="header-panel">
+            <h1>The Acoustic Map</h1>
+            <p>19 raw nature recordings from the Austrian Alps.</p>
+        </div>
+        <a href="/" class="btn-back">
+            <i data-feather="arrow-left" style="width: 16px; height: 16px;"></i> Sound Generator
+        </a>
+    </div>
+
+    <div class="now-playing" id="now-playing">
+        <div class="sound-wave">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <span id="playing-title" style="font-weight: 700; font-size: 14px;">Playing: River Flow</span>
+        <button id="stop-btn" style="background:none; border:none; color:white; cursor:pointer; padding: 5px; margin-left: 10px;">
+            <i data-feather="x-circle" style="width: 20px; height: 20px;"></i>
+        </button>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        feather.replace();
+
+        // 1. Initialize Map centered on Austria (Salzburg/Kaprun region)
+        const map = L.map('map', { zoomControl: false }).setView([47.4, 13.0], 8);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // 2. Add Lush Green Satellite Map (Esri World Imagery - FREE, NO API KEY)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 18
+        }).addTo(map);
+
+        // 3. Global Audio Player
+        let currentAudio = null;
+        const nowPlayingWidget = document.getElementById('now-playing');
+        const playingTitle = document.getElementById('playing-title');
+        let activeMarker = null;
+
+        // TEMPORARY LIVE AUDIO URLs FOR TESTING
+        const tmpWater = "https://actions.google.com/sounds/v1/water/stream_flowing.ogg";
+        const tmpWind = "https://actions.google.com/sounds/v1/weather/wind_blowing_through_trees.ogg";
+        const tmpBird = "https://actions.google.com/sounds/v1/animals/crows_cawing.ogg";
+        const tmpHuman = "https://actions.google.com/sounds/v1/foley/footsteps_on_gravel.ogg";
+        const tmpCulture = "https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg";
+
+        // 4. The 19 Austrian Sound Locations Matrix
+        // I have swapped the 'file' property to use the live URLs above.
+        const soundsData = [
+            { id: 1, title: "Kaprun River Flow", lat: 47.273, lng: 12.759, file: tmpWater },
+            { id: 2, title: "Cow Bells in Summer", lat: 47.450, lng: 12.800, file: tmpCulture },
+            { id: 3, title: "Hiking Boots on Gravel", lat: 47.074, lng: 12.694, file: tmpHuman }, 
+            { id: 4, title: "Alpine Choughs Calling", lat: 47.150, lng: 13.100, file: tmpBird }, 
+            { id: 5, title: "Dachstein Howling Wind", lat: 47.475, lng: 13.620, file: tmpWind },
+            { id: 6, title: "Melting Glacier Drips", lat: 47.100, lng: 12.750, file: tmpWater },
+            { id: 7, title: "Distant Village Church Bells", lat: 47.323, lng: 12.796, file: tmpCulture }, 
+            { id: 8, title: "Krimml Waterfall Roar", lat: 47.211, lng: 12.169, file: tmpWater },
+            { id: 9, title: "Snow Crunch under Foot", lat: 47.280, lng: 12.700, file: tmpHuman },
+            { id: 10, title: "Marmots Whistling", lat: 47.110, lng: 12.820, file: tmpBird },
+            { id: 11, title: "Pine Forest Breeze", lat: 47.400, lng: 13.000, file: tmpWind },
+            { id: 12, title: "Summer Rain on Leaves", lat: 47.500, lng: 13.200, file: tmpWater },
+            { id: 13, title: "Woodpecker in the Woods", lat: 47.350, lng: 13.300, file: tmpBird },
+            { id: 14, title: "Mountain Bike on Trail", lat: 47.380, lng: 12.650, file: tmpHuman },
+            { id: 15, title: "Campfire Crackling", lat: 47.250, lng: 13.400, file: tmpWind },
+            { id: 16, title: "Morning Meadow Birds", lat: 47.420, lng: 12.900, file: tmpBird },
+            { id: 17, title: "Distant Thunder Echo", lat: 47.180, lng: 13.500, file: tmpWind },
+            { id: 18, title: "Mountain Hut Ambience", lat: 47.300, lng: 12.950, file: tmpCulture },
+            { id: 19, title: "Ice Cracking on Lake", lat: 47.320, lng: 12.800, file: tmpWater }
+        ];
+
+        // 5. Custom Marker Icon HTML
+        const createMarkerIcon = () => L.divIcon({
+            className: 'custom-marker',
+            html: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        // 6. Plot Markers on Map
+        const markers = [];
+        soundsData.forEach(sound => {
+            const marker = L.marker([sound.lat, sound.lng], { icon: createMarkerIcon() }).addTo(map);
+            markers.push(marker);
+            
+            marker.bindPopup(`<strong>${sound.title}</strong><span style="color:#aaa; font-size:12px; text-transform:uppercase;">Click to listen</span>`);
+
+            marker.on('click', () => {
+                // Stop previous audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                }
+                
+                // Reset styling
+                document.querySelectorAll('.custom-marker').forEach(el => el.classList.remove('playing'));
+                
+                // Highlight current marker
+                marker.getElement().classList.add('playing');
+
+                // Error Handling for Audio
+                currentAudio = new Audio(sound.file);
+                currentAudio.loop = true; 
+                
+                currentAudio.play().then(() => {
+                    // Show UI Widget only if audio successfully plays
+                    playingTitle.innerText = sound.title;
+                    nowPlayingWidget.classList.add('active');
+                }).catch(e => {
+                    console.log("Audio file missing or blocked:", e);
+                    playingTitle.innerText = "Error: File missing!";
+                    nowPlayingWidget.classList.add('active');
+                });
+            });
+        });
+
+        // 7. Stop Button Logic
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            document.querySelectorAll('.custom-marker').forEach(el => el.classList.remove('playing'));
+            nowPlayingWidget.classList.remove('active');
+        });
+
+    </script>
+</body>
+</html>

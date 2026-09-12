@@ -72,3 +72,9 @@ async def generate_soundscape(
 async def serve_ui():
     with open("index.html") as f:
         return f.read()
+
+@app.get("/map.html", response_class=HTMLResponse)
+async def serve_map():
+    """Serves the interactive sound map."""
+    with open("map.html") as f:
+        return f.read()

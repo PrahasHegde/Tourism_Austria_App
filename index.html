@@ -16,7 +16,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; color: var(--ink); background: var(--cream); font-family: "DM Sans", sans-serif; overflow-x: hidden; }
         
-        .hero { min-height: 100vh; position: relative; overflow: hidden; background: linear-gradient(110deg, rgba(22,25,29,.78), rgba(22,25,29,.08)), url("https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=2200&q=85") center/cover; transition: opacity 0.7s ease; }
+        .hero { min-height: 100vh; position: relative; overflow: hidden; background: linear-gradient(110deg, rgba(22,25,29,.78), rgba(22,25,29,.08)), url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=90") center/cover; transition: opacity 0.7s ease; }
         .hero::after { content: ""; position: absolute; inset: auto 0 0; height: 35%; background: linear-gradient(transparent, rgba(13,15,18,.72)); pointer-events: none; }
         nav { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 30px 6vw; color: white; }
         .brand { display: flex; gap: 12px; align-items: center; font-weight: 700; letter-spacing: .04em; }
@@ -99,12 +99,21 @@
             <div class="brand"><span class="mark">AT</span><span>AUSTRIA</span></div>
             <span class="nav-note">The sound of the Alps</span>
         </nav>
+        
         <section class="hero-content">
             <span class="eyebrow">A journey in sound</span>
             <h1>Find your way back to the mountains.</h1>
             <p class="intro">Let Austria meet you where you are. We read your mood and compose a personal alpine soundscape for the moment.</p>
-            <button class="primary-button" id="open-sounds" type="button">Alpine Sounds &gt;</button>
+            
+            <!-- Button Row -->
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="primary-button" id="open-sounds" type="button">Generate Mix &gt;</button>
+                <a href="map.html" class="primary-button" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px);">
+                    Explore Sound Map &gt;
+                </a>
+            </div>
         </section>
+
         <span class="footnote">Salzburg - Tyrol - Vorarlberg</span>
     </main>
 
