@@ -3,6 +3,9 @@
 <img width="1832" height="1017" alt="image" src="https://github.com/user-attachments/assets/593c7c70-9369-46b6-9d31-77bf66e70d94" />
 
 
+<img width="1672" height="986" alt="image" src="https://github.com/user-attachments/assets/a377ed88-121b-41d6-ad0e-99be24ee433f" />
+
+
 An innovative web application that creates personalized, emotion-driven soundscapes celebrating Austrian alpine beauty and nature. Users have their emotion detected via facial recognition, select their preferred season and time of day, and receive a custom 30-second audio experience blending natural sounds from Austria's landscapes with AI-generated ambient audio.
 
 ## ✨ Key Features
